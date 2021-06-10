@@ -6,10 +6,15 @@ import (
 	"github.com/lithammer/shortuuid"
 )
 
+type Client struct {
+	Conn *websocket.Conn
+	Name string
+}
+
 type Session struct {
 	ID       string
 	Password string
-	Conns    []*websocket.Conn
+	Clients  []*Client
 	Buf      []byte
 }
 
@@ -38,24 +43,24 @@ func (s *Service) GetSession(id string) *Session {
 	return s.ss[id]
 }
 
-func (s *Service) GetSessionClients(id string) []*websocket.Conn {
-	return s.ss[id].Conns
+func (s *Service) GetSessionClients(id string) []*Client {
+	return s.ss[id].Clients
 }
 
-func (s *Service) JoinSession(id string, conn *websocket.Conn) {
-	s.ss[id].Conns = append(s.ss[id].Conns, conn)
+func (s *Service) JoinSession(id string, client *Client) {
+	s.ss[id].Clients = append(s.ss[id].Clients, client)
 }
 
-func (s *Service) LeaveSession(id string, conn *websocket.Conn) {
-	a := s.ss[id].Conns
-	for i, c := range s.ss[id].Conns {
-		if c == conn {
-			copy(a[i:], s.ss[id].Conns[i+1:])
+func (s *Service) LeaveSession(id string, client *Client) {
+	a := s.ss[id].Clients
+	for i, c := range s.ss[id].Clients {
+		if c == client {
+			copy(a[i:], a[i+1:])
 			a[len(a)-1] = nil // or the zero value of T
 			a = a[:len(a)-1]
 		}
 	}
-	s.ss[id].Conns = a
+	s.ss[id].Clients = a
 }
 
 func (s *Service) WriteBuf(id string, buf []byte) error {

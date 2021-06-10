@@ -46,13 +46,15 @@ func (h *handler) GetSession(w http.ResponseWriter, r *http.Request) {
 	s := h.service.GetSession(uuid)
 
 	sess := struct {
-		ID    string
-		Conns int
-		Buf   []byte
+		ID        string
+		Connected int
+		Clients   []*session.Client
+		Buf       []byte
 	}{
-		ID:    uuid,
-		Conns: len(s.Conns),
-		Buf:   s.Buf,
+		ID:        uuid,
+		Connected: len(s.Clients),
+		Clients:   s.Clients,
+		Buf:       s.Buf,
 	}
 
 	bytes, err := json.MarshalIndent(sess, "", " ")
