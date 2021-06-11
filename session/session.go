@@ -12,10 +12,11 @@ type Client struct {
 }
 
 type Session struct {
-	ID       string
-	Password string
-	Clients  []*Client
-	Buf      []byte
+	ID         string
+	Password   string
+	MaxClients int
+	Clients    []*Client
+	Buf        []byte
 }
 
 type Service struct {
@@ -56,7 +57,7 @@ func (s *Service) LeaveSession(id string, client *Client) {
 	for i, c := range s.ss[id].Clients {
 		if c == client {
 			copy(a[i:], a[i+1:])
-			a[len(a)-1] = nil // or the zero value of T
+			a[len(a)-1] = nil
 			a = a[:len(a)-1]
 		}
 	}
