@@ -42,6 +42,7 @@ func (h *handler) wsListenerHandler(w http.ResponseWriter, r *http.Request) {
 	conn, _ := upgrader.Upgrade(w, r, nil) // error ignored for sake of simplicity
 	conn.WriteMessage(websocket.TextMessage, []byte("Hello"))
 	_, name, _ := conn.ReadMessage()
+	log.Printf("[%s] %s connected\n", uuid, string(name))
 	client := &session.Client{
 		Name: string(name),
 		Conn: conn,
@@ -50,6 +51,7 @@ func (h *handler) wsListenerHandler(w http.ResponseWriter, r *http.Request) {
 	for {
 		mType, msg, err := conn.ReadMessage()
 		if mType == -1 {
+			log.Printf("[%s] %s disconnected\n", uuid, client.Name)
 			h.service.LeaveSession(uuid, client)
 			conn.Close()
 			return
