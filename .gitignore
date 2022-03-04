@@ -1,4 +1,5 @@
 *.db
 *.db.lock
+*.swp
 client/
 frontend/
