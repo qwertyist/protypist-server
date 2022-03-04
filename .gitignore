@@ -1,2 +1,4 @@
 *.db
 *.db.lock
+client/
+frontend/

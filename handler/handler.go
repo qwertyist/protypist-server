@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 
@@ -42,5 +43,25 @@ func (h *handler) CreateSession(w http.ResponseWriter, r *http.Request) {
 func (h *handler) GetSession(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	uuid := vars["uuid"]
-	w.Write(h.service.ReadBuf(uuid))
+	s := h.service.GetSession(uuid)
+
+	sess := struct {
+		ID        string
+		Connected int
+		Clients   []*session.Client
+		Buf       []byte
+	}{
+		ID:        uuid,
+		Connected: len(s.Clients),
+		Clients:   s.Clients,
+		Buf:       s.Buf,
+	}
+
+	bytes, err := json.MarshalIndent(sess, "", " ")
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Marshall failed"))
+	}
+
+	w.Write(bytes)
 }

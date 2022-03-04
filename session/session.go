@@ -6,11 +6,17 @@ import (
 	"github.com/lithammer/shortuuid"
 )
 
+type Client struct {
+	Conn *websocket.Conn
+	Name string
+}
+
 type Session struct {
-	id       string
-	password string
-	conns    []*websocket.Conn
-	buf      []byte
+	ID         string
+	Password   string
+	MaxClients int
+	Clients    []*Client
+	Buf        []byte
 }
 
 type Service struct {
@@ -28,25 +34,41 @@ func NewService(db *bolt.DB) *Service {
 func (s *Service) CreateSession(password string) string {
 	sess := &Session{}
 	id := shortuuid.New()
-	sess.id = id
-	sess.password = password
+	sess.ID = id
+	sess.Password = password
 	s.ss[id] = sess
 	return id
 }
 
-func (s *Service) GetSession(id string) []*websocket.Conn {
-	return s.ss[id].conns
+func (s *Service) GetSession(id string) *Session {
+	return s.ss[id]
 }
 
-func (s *Service) JoinSession(id string, conn *websocket.Conn) {
-	s.ss[id].conns = append(s.ss[id].conns, conn)
+func (s *Service) GetSessionClients(id string) []*Client {
+	return s.ss[id].Clients
+}
+
+func (s *Service) JoinSession(id string, client *Client) {
+	s.ss[id].Clients = append(s.ss[id].Clients, client)
+}
+
+func (s *Service) LeaveSession(id string, client *Client) {
+	a := s.ss[id].Clients
+	for i, c := range s.ss[id].Clients {
+		if c == client {
+			copy(a[i:], a[i+1:])
+			a[len(a)-1] = nil
+			a = a[:len(a)-1]
+		}
+	}
+	s.ss[id].Clients = a
 }
 
 func (s *Service) WriteBuf(id string, buf []byte) error {
-	s.ss[id].buf = buf
+	s.ss[id].Buf = buf
 	return nil
 }
 
 func (s *Service) ReadBuf(id string) []byte {
-	return s.ss[id].buf
+	return s.ss[id].Buf
 }
