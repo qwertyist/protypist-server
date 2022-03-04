@@ -2,12 +2,14 @@ package session
 
 import (
 	"github.com/boltdb/bolt"
+	"github.com/gorilla/websocket"
 	"github.com/lithammer/shortuuid"
 )
 
 type Session struct {
 	id       string
 	password string
+	conns    []*websocket.Conn
 	buf      []byte
 }
 
@@ -30,4 +32,21 @@ func (s *Service) CreateSession(password string) string {
 	sess.password = password
 	s.ss[id] = sess
 	return id
+}
+
+func (s *Service) GetSession(id string) []*websocket.Conn {
+	return s.ss[id].conns
+}
+
+func (s *Service) JoinSession(id string, conn *websocket.Conn) {
+	s.ss[id].conns = append(s.ss[id].conns, conn)
+}
+
+func (s *Service) WriteBuf(id string, buf []byte) error {
+	s.ss[id].buf = buf
+	return nil
+}
+
+func (s *Service) ReadBuf(id string) []byte {
+	return s.ss[id].buf
 }

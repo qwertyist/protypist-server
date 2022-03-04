@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -26,18 +27,20 @@ func NewHandler(service *session.Service) *handler {
 
 func (h *handler) Endpoints(r *mux.Router) {
 	r.HandleFunc("/session", h.CreateSession).Methods("POST")
-	r.HandleFunc("/session", h.GetSession).Methods("GET")
-	r.HandleFunc("/recv", h.RecvTX).Methods("GET")
+	r.HandleFunc("/session/{uuid}", h.GetSession).Methods("GET")
+	r.HandleFunc("/ws", h.wsInterpreterHandler)
+	r.HandleFunc("/listen/{uuid}", h.wsListenerHandler)
+
 }
 
 func (h *handler) CreateSession(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Created session"))
+	uuid := h.service.CreateSession("")
+	log.Printf("Created sesssion: %s", uuid)
+	w.Write([]byte(uuid))
 }
 
 func (h *handler) GetSession(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Get session"))
-}
-
-func (h *handler) RecvTX(w http.ResponseWriter, r *http.Request) {
-
+	vars := mux.Vars(r)
+	uuid := vars["uuid"]
+	w.Write(h.service.ReadBuf(uuid))
 }
